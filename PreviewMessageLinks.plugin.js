@@ -51,8 +51,7 @@ const { jumpToMessage } = findModuleByProps('jumpToMessage');
 
 const { Messages } = findModule((m) => m.default?.Messages?.REPLY_QUOTE_MESSAGE_NOT_LOADED).default;
 const { Endpoints, ActionTypes, EmbedTypes, USER_MESSAGE_TYPES } = findModuleByProps('Endpoints');
-const { getToken } = findModule((m) => m.default?.getToken).default;
-const { getAPIBaseURL } = findModuleByProps('getAPIBaseURL');
+const RequestModule = findModuleByProps('getAPIBaseURL');
 const linkRegex = /^^https?:\/\/([\w-\.]+\.)?discord(app)?\.com(:\d+)?\/channels\/(\d+|@me)\/(\d+)\/(\d+)(\/.*)?$/i;
 const { createMessageRecord, updateMessageRecord } = findModuleByProps('createMessageRecord');
 
@@ -97,32 +96,33 @@ const PluginStore = new (class EmbeddedMessagesStore extends EventEmitter {
         };
     }
 
-    async fetchMessage(channelId, messageId, retries = 2) {
+    async fetchMessage(channelId, messageId) {
         const { WARNING, ERROR } = HelpMessageTypes;
         const { REPLY_QUOTE_MESSAGE_DELETED, REPLY_QUOTE_MESSAGE_NOT_LOADED } = Messages;
-        const url = `${getAPIBaseURL()}${Endpoints.MESSAGES(channelId)}?limit=1&around=${messageId}`;
-        const headers = { authorization: getToken() };
         if (this.#embeddedMessages.get(channelId, messageId)?.status === MessageStatus.FETCHING) return;
         this.#embeddedMessages.set(channelId, messageId, {
             status: MessageStatus.FETCHING,
         });
 
         try {
-            let response;
-            while ((response = await fetch(url, { headers })).status === 429 && retries-- > 0) {
-                const { retry_after } = await response.json();
-                await new Promise((resolve) => setTimeout(resolve, retry_after * 1000));
-            }
+            const response = await RequestModule.get({
+                url: Endpoints.MESSAGES(channelId),
+                query: {
+                    limit: 1,
+                    around: messageId,
+                },
+                retries: 2,
+            }).catch((response) => response);
 
-            const body = await response.json();
-            const message = body?.[0];
-
-            if (!response.ok)
+            if (!response.ok) {
                 throw {
                     messageType: WARNING,
                     name: REPLY_QUOTE_MESSAGE_NOT_LOADED,
-                    message: body?.message ?? response.statusText,
+                    message: response.body?.message ?? `Status ${response.status}`,
                 };
+            }
+
+            const message = response.body?.[0];
 
             if (!message || message.id !== messageId)
                 throw {
@@ -285,7 +285,6 @@ const MessageEmbedError = ({
 const MessageEmbedPreview = memo(({ className, channel, message, compact, depth }) => {
     const [hovered, setHovered] = useState(false);
     const { disableInteraction } = useSettings('disableInteraction');
-    console.log(message);
 
     const { childrenHeader, childrenRepliedMessage } = MessageComponent.type({
         channel,
