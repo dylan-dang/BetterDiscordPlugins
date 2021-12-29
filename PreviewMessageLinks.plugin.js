@@ -57,6 +57,7 @@ const linkRegex = /^^https?:\/\/([\w-\.]+\.)?discord(app)?\.com(:\d+)?\/channels
 const { createMessageRecord, updateMessageRecord } = findModuleByProps('createMessageRecord');
 
 const Styles = {
+    ...findModuleByProps('marginBottom20', 'marginBottom8', 'marginReset'),
     ...findModuleByProps('searchResult', 'button'),
     ...findModuleByProps('attachmentContainer', 'wrapper'),
     ...findModuleByProps('hasThread', 'compact'),
@@ -370,7 +371,7 @@ const SettingSwitch = ({ setting, name, note, hideBorder }) => {
     const settings = useSettings(setting);
     return createElement(SwitchItem, {
         children: name,
-        className: 'marginReset-236NPn',
+        className: Styles.marginReset,
         onChange: () => PluginStore.setSettings({ [setting]: !settings[setting] }),
         value: settings[setting],
         hideBorder,
@@ -382,10 +383,10 @@ const SettingIntegerSlider = ({ setting, name, note, minValue, maxValue }) => {
     const settings = useSettings(setting);
     return createElement(Fragment, {
         children: [
-            createElement(FormTitle, { className: 'marginBottom8-AtZOdT', children: name }),
+            createElement(FormTitle, { className: Styles.marginBottom8, children: name }),
             note &&
                 createElement(FormText, {
-                    className: 'marginBottom20-32qID7',
+                    className: Styles.marginBottom20,
                     children: note,
                     type: FormText.DESCRIPTION,
                 }),
