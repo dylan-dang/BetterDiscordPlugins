@@ -154,7 +154,7 @@ const PluginStore = new (class EmbeddedMessagesStore extends EventEmitter {
     }
 
     getMessage(channelId, messageId) {
-        const loadedMessage = MessageStore.getMessage(channelId, messageId);
+        const loadedMessage = MessageStore?.getMessage(channelId, messageId);
         if (loadedMessage)
             this.#embeddedMessages.set(channelId, messageId, {
                 status: MessageStatus.RECEIVED,
