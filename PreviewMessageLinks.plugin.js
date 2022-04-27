@@ -36,7 +36,8 @@ const FormTitle = findModuleByDisplayName('FormTitle');
 const FormText = findModuleByDisplayName('FormText');
 const SwitchItem = findModuleByDisplayName('SwitchItem');
 const SystemMessageContextMenu = findModuleByDisplayName('SystemMessageContextMenu');
-const MessageContextMenu = findModuleByDisplayName('MessageContextMenu');
+//lazy hotfix to deal with MessageContextMenu module being lazy loaded
+let MessageContextMenu;
 const { default: HelpMessage, HelpMessageTypes } = findModuleByProps('HelpMessageTypes');
 const {
     MessageAccessories: { prototype: MessageAccessoriesRenderer },
@@ -565,6 +566,7 @@ const subscriptions = {
 
 module.exports = class {
     start() {
+        MessageContextMenu = findModuleByDisplayName('MessageContextMenu');
         Object.entries(subscriptions).forEach(([action, callback]) => Dispatcher.subscribe(action, callback));
         Patcher.instead(PLUGIN_ID, MessageContent, 'type', patchMessageContent);
         Patcher.after(PLUGIN_ID, MessageAccessoriesRenderer, 'render', patchEmbeds);
