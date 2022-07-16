@@ -2,7 +2,7 @@
  * @name PreviewMessageLinks
  * @author dylan-dang
  * @description Shows a embedded message preview for message links in chat
- * @version 0.0.1
+ * @version 0.0.2
  * @authorId 316707214075101196
  */
 
@@ -28,7 +28,7 @@ const MessagePlaceHolder = findModuleByProps('HEIGHT_COZY_MESSAGE_START').defaul
 const MessageComponent = findModuleByProps('getElementFromMessageId').default;
 const MessageContent = findModule((m) => m.default?.type?.displayName === 'MessageContent').default;
 const ChannelMessage = findModule((m) => m.default?.type?.displayName == 'ChannelMessage').default;
-const MaskedLink = findModuleByDisplayName('MaskedLink');
+const Anchor = findModuleByDisplayName('Anchor');
 const Clickable = findModuleByDisplayName('Clickable');
 const Slider = findModuleByDisplayName('Slider');
 const FormSection = findModuleByDisplayName('FormSection');
@@ -276,7 +276,7 @@ const MessageEmbedError = ({
 }) => {
     const reasonFragment = reason.endsWith('.') ? reason.slice(0, -1) : reason;
     const children = info ? `${reasonFragment}: ${info}` : reasonFragment;
-    return createElement(MaskedLink, {
+    return createElement(Anchor, {
         children: createElement(HelpMessage, { messageType, children }),
         className,
         href,
