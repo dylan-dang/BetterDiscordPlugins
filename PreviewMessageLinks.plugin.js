@@ -51,7 +51,7 @@ const { transitionToGuild } = findModuleByProps('transitionTo', 'replaceWith', '
 const { jumpToMessage } = findModuleByProps('jumpToMessage');
 
 const { Messages } = findModule((m) => m.default?.Messages?.REPLY_QUOTE_MESSAGE_NOT_LOADED).default;
-const { Endpoints, ActionTypes, EmbedTypes, USER_MESSAGE_TYPES } = findModuleByProps('Endpoints');
+const { Endpoints, RPCEvents, EmbedTypes, USER_MESSAGE_TYPES } = findModuleByProps('Endpoints');
 const RequestModule = findModuleByProps('getAPIBaseURL');
 const linkRegex = /^^https?:\/\/([\w-\.]+\.)?discord(app)?\.com(:\d+)?\/channels\/(\d+|@me)\/(\d+)\/(\d+)(\/.*)?$/i;
 const { createMessageRecord, updateMessageRecord } = findModuleByProps('createMessageRecord');
@@ -501,7 +501,7 @@ ${Styles.compact}.${Styles.hasThread} > .${Styles.messageEmbed}:before {
 `;
 
 const subscriptions = {
-    [ActionTypes.MESSAGE_CREATE]: ({ message }) => {
+    [RPCEvents.MESSAGE_CREATE]: ({ message }) => {
         if (!PluginStore.hasMessage(message.channel_id, message.id)) return;
 
         PluginStore.updateMessage(message.channel_id, message.id, {
@@ -509,7 +509,7 @@ const subscriptions = {
             message: createMessageRecord(message),
         });
     },
-    [ActionTypes.MESSAGE_UPDATE]: ({ message }) => {
+    [RPCEvents.MESSAGE_UPDATE]: ({ message }) => {
         if (!PluginStore.hasMessage(message.channel_id, message.id)) return;
 
         PluginStore.updateMessage(message.channel_id, message.id, {
@@ -517,7 +517,7 @@ const subscriptions = {
             message: updateMessageRecord(PluginStore.getMessage(message.channel_id, message.id).message, message),
         });
     },
-    [ActionTypes.MESSAGE_DELETE]: ({ channelId, id }) => {
+    [RPCEvents.MESSAGE_DELETE]: ({ channelId, id }) => {
         if (!PluginStore.hasMessage(channelId, id)) return;
 
         PluginStore.updateMessage(channelId, id, {
@@ -528,7 +528,7 @@ const subscriptions = {
             },
         });
     },
-    [ActionTypes.MESSAGE_REACTION_ADD]: ({ channelId, messageId, userId, emoji, optimistic }) => {
+    [RPCEvents.MESSAGE_REACTION_ADD]: ({ channelId, messageId, userId, emoji, optimistic }) => {
         const self = userId === UserStore.getId();
         if (!optimistic && self) return;
         if (!PluginStore.hasMessage(channelId, messageId)) return;
@@ -538,7 +538,7 @@ const subscriptions = {
             message: PluginStore.getMessage(channelId, messageId).message.addReaction(emoji, self),
         });
     },
-    [ActionTypes.MESSAGE_REACTION_REMOVE]: ({ channelId, messageId, userId, emoji, optimistic }) => {
+    [RPCEvents.MESSAGE_REACTION_REMOVE]: ({ channelId, messageId, userId, emoji, optimistic }) => {
         const self = userId === UserStore.getId();
         if (!optimistic && self) return;
         if (!PluginStore.hasMessage(channelId, messageId)) return;
@@ -548,14 +548,14 @@ const subscriptions = {
             message: PluginStore.getMessage(channelId, messageId).message.removeReaction(emoji, self),
         });
     },
-    [ActionTypes.MESSAGE_REACTION_REMOVE_ALL]: ({ channelId, messageId }) => {
+    [RPCEvents.MESSAGE_REACTION_REMOVE_ALL]: ({ channelId, messageId }) => {
         if (!PluginStore.hasMessage(channelId, messageId)) return;
         PluginStore.updateMessage(channelId, messageId, {
             status: MessageStatus.RECEIVED,
             message: PluginStore.getMessage(channelId, messageId).message.set('reactions', []),
         });
     },
-    [ActionTypes.MESSAGE_REACTION_REMOVE_EMOJI]: ({ channelId, messageId, emoji }) => {
+    [RPCEvents.MESSAGE_REACTION_REMOVE_EMOJI]: ({ channelId, messageId, emoji }) => {
         if (!PluginStore.hasMessage(channelId, messageId)) return;
         PluginStore.updateMessage(channelId, messageId, {
             status: MessageStatus.RECEIVED,
