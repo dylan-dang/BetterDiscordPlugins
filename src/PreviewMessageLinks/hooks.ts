@@ -30,6 +30,10 @@ export function useSetting<T extends keyof typeof defaultSettings>(key: T) {
     return [setting, saveSetting] as const;
 }
 
+export function formatErrorMessage(name: string, message: string) {
+    return `${name.endsWith('.') ? name.slice(0, -1) : name}: ${message}`;
+}
+
 async function fetchMessage(channelId: snowflake, messageId: snowflake): Promise<MessageCache.Record> {
     const { REPLY_QUOTE_MESSAGE_NOT_LOADED: MESSAGE_NOT_LOADED, REPLY_QUOTE_MESSAGE_DELETED: MESSAGE_DELETED } =
         LocaleMessages;
@@ -54,7 +58,7 @@ async function fetchMessage(channelId: snowflake, messageId: snowflake): Promise
         return {
             status: 'ERROR',
             errorType: HelpMessageTypes.WARNING,
-            errorMessage: `${MESSAGE_NOT_LOADED}: ${response.body?.message ?? `Status ${response.status}`}`,
+            errorMessage: formatErrorMessage(MESSAGE_NOT_LOADED, response.body?.message ?? `Status ${response.status}`),
         };
 
     const message = response.body?.[0];
@@ -62,14 +66,14 @@ async function fetchMessage(channelId: snowflake, messageId: snowflake): Promise
         return {
             status: 'ERROR',
             errorType: HelpMessageTypes.ERROR,
-            errorMessage: LocaleMessages.REPLY_QUOTE_MESSAGE_DELETED,
+            errorMessage: MESSAGE_DELETED,
         };
 
     if (!ChannelStore.hasChannel(message.channel_id))
         return {
             status: 'ERROR',
             errorType: HelpMessageTypes.WARNING,
-            errorMessage: `${MESSAGE_NOT_LOADED}: Channel not in store`,
+            errorMessage: formatErrorMessage(MESSAGE_NOT_LOADED, 'Channel not in store'),
         };
 
     return {

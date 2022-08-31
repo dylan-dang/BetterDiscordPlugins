@@ -15,7 +15,7 @@ import {
     MessageHeader,
 } from 'discord/components';
 import { DEFAULT_POPOUTS, EmbedTypes, linkRegex, LocaleMessages, USER_MESSAGE_TYPES } from 'discord/constants';
-import { useMessageCache, useSetting } from './hooks';
+import { formatErrorMessage, useMessageCache, useSetting } from './hooks';
 import type { MessageContentProps } from 'discord/components';
 import type { FunctionComponent, ReactNode, MouseEvent, MouseEventHandler } from 'react';
 import { useState, Children, useCallback, memo } from 'bdapi/React';
@@ -270,10 +270,9 @@ export function MessageEmbed({ channelId, messageId, depth, href, compact }: Mes
     const channel = ChannelStore.getChannel(channelId);
 
     if (!channel) {
-        const errorMessage = `${LocaleMessages.REPLY_QUOTE_MESSAGE_NOT_LOADED}: Channel could not be found`;
         return (
             <ErrorMessage type={HelpMessageTypes.WARNING} href={href}>
-                {errorMessage}
+                {formatErrorMessage(LocaleMessages.REPLY_QUOTE_MESSAGE_NOT_LOADED, 'Channel could not be found')}
             </ErrorMessage>
         );
     }

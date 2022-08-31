@@ -27,8 +27,11 @@ function getSourceDir() {
     return path.join(__dirname, 'src');
 }
 
-function getOuputDir() {
-    if (!(argv.includes('--install') || argv.includes('-i'))) return path.join(__dirname, 'dist');
+function getOuputDir(pluginName?: string) {
+    if (!(argv.includes('--install') || argv.includes('-i'))) {
+        if (!pluginName) return path.join(__dirname, 'dist');
+        return path.join(__dirname, pluginName, 'dist');
+    }
     switch (platform) {
         case 'win32':
             if (!env.APPDATA) throw new Error('Could not find appdata folder');
@@ -183,7 +186,7 @@ async function build(pluginName: string) {
     });
 
     await bundle.write({
-        file: path.join(getOuputDir(), `${pluginName}.plugin.js`),
+        file: path.join(getOuputDir(pluginName), `${pluginName}.plugin.js`),
         format: 'cjs',
         exports: 'auto',
         inlineDynamicImports: true,

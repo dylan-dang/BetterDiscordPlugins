@@ -1,8 +1,8 @@
 /**
  * @name PreviewMessageLinks
- * @version 1.0.1
+ * @version 1.0.2
  * @author dylan-dang
- * @description Shows a embedded message preview for message links in chat
+ * @description Adds a embedded message preview for message links in chat
  * @authorId 316707214075101200
  */
 'use strict';
@@ -141,8 +141,13 @@ function useSetting(key) {
     return [setting, saveSetting];
 }
 
+function formatErrorMessage(name, message) {
+    return `${name.endsWith('.') ? name.slice(0, -1) : name}: ${message}`;
+}
+
 async function fetchMessage(channelId, messageId) {
-    const { REPLY_QUOTE_MESSAGE_NOT_LOADED: MESSAGE_NOT_LOADED } = LocaleMessages;
+    const { REPLY_QUOTE_MESSAGE_NOT_LOADED: MESSAGE_NOT_LOADED, REPLY_QUOTE_MESSAGE_DELETED: MESSAGE_DELETED } =
+        LocaleMessages;
     const response = await RequestModule.get({
         url: Endpoints.MESSAGES(channelId),
         query: {
@@ -163,7 +168,7 @@ async function fetchMessage(channelId, messageId) {
             status: 'ERROR',
             errorType: 0,
             /* HelpMessageTypes.WARNING */
-            errorMessage: `${MESSAGE_NOT_LOADED}: ${response.body?.message ?? `Status ${response.status}`}`,
+            errorMessage: formatErrorMessage(MESSAGE_NOT_LOADED, response.body?.message ?? `Status ${response.status}`),
         };
     const message = response.body?.[0];
     if (!message || message.id !== messageId)
@@ -171,14 +176,14 @@ async function fetchMessage(channelId, messageId) {
             status: 'ERROR',
             errorType: 2,
             /* HelpMessageTypes.ERROR */
-            errorMessage: LocaleMessages.REPLY_QUOTE_MESSAGE_DELETED,
+            errorMessage: MESSAGE_DELETED,
         };
     if (!ChannelStore.hasChannel(message.channel_id))
         return {
             status: 'ERROR',
             errorType: 0,
             /* HelpMessageTypes.WARNING */
-            errorMessage: `${MESSAGE_NOT_LOADED}: Channel not in store`,
+            errorMessage: formatErrorMessage(MESSAGE_NOT_LOADED, 'Channel not in store'),
         };
     return {
         status: 'SUCCESS',
@@ -435,7 +440,6 @@ function MessageEmbed({ channelId, messageId, depth, href, compact }) {
     const channel = ChannelStore.getChannel(channelId);
 
     if (!channel) {
-        const errorMessage = `${LocaleMessages.REPLY_QUOTE_MESSAGE_NOT_LOADED}: Channel could not be found`;
         return BdApi.React.createElement(
             ErrorMessage,
             {
@@ -443,7 +447,7 @@ function MessageEmbed({ channelId, messageId, depth, href, compact }) {
                 /* HelpMessageTypes.WARNING */
                 href: href,
             },
-            errorMessage
+            formatErrorMessage(LocaleMessages.REPLY_QUOTE_MESSAGE_NOT_LOADED, 'Channel could not be found')
         );
     }
 
