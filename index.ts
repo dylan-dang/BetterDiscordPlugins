@@ -29,8 +29,8 @@ function getSourceDir() {
 
 function getOuputDir(pluginName?: string) {
     if (!(argv.includes('--install') || argv.includes('-i'))) {
-        if (!pluginName) return path.join(__dirname, 'dist');
-        return path.join(__dirname, pluginName, 'dist');
+        const distDir = path.join(__dirname, 'dist');
+        return pluginName ? path.join(distDir, pluginName) : distDir;
     }
     switch (platform) {
         case 'win32':
