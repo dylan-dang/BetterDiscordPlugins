@@ -318,7 +318,14 @@ export const {
     MessageAccessories: MessageAccessoriesComponent;
 } = getModule(byProps('MessageAccessories'));
 
+export const MessageContextMenuModuleAbortController = new AbortController();
+export const SystemMessageContextMenuModuleAbortController = new AbortController();
+
 export const MessageContextMenuModulePromise: Promise<{ default: FunctionComponent<MessageContextMenuProps> }> =
-    waitForModule((m) => m.default.displayName === 'MessageContextMenu');
+    waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
+        signal: MessageContextMenuModuleAbortController.signal,
+    });
 export const SystemMessageContextMenuModulePromise: Promise<{ default: FunctionComponent<MessageContextMenuProps> }> =
-    waitForModule((m) => m.default.displayName === 'SystemMessageContextMenu');
+    waitForModule((m) => m.default.displayName === 'SystemMessageContextMenu', {
+        signal: SystemMessageContextMenuModuleAbortController.signal,
+    });

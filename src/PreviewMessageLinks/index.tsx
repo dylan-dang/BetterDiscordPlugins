@@ -2,7 +2,9 @@ import { clearCSS, injectCSS, Patcher } from 'bdapi';
 import {
     MessageAccessories,
     MessageContent,
+    MessageContextMenuModuleAbortController,
     MessageContextMenuModulePromise,
+    SystemMessageContextMenuModuleAbortController,
     SystemMessageContextMenuModulePromise,
 } from 'discord/components';
 import type { MessageContextMenuProps, MessageContentProps } from 'discord/components';
@@ -14,10 +16,8 @@ import css from './styles.scss';
 import { jumpToMessage, transitionToGuild } from 'discord/utils';
 import type { FunctionComponent } from 'react';
 
-let pluginHasStopped = false;
 const JumpingActionIds = new Set(['edit', 'reply', 'mark-unread']);
 type MenuItemProps = { id: string; label: string; action(...args: any[]): any };
-
 function traverseMenuItems({ props }: any, callback: (props: MenuItemProps) => void) {
     if (props.action) return callback(props);
     for (const child of props.children ?? []) {
@@ -43,11 +43,6 @@ function patchContextMenu(_: unknown, [{ target, message, channel }]: [MessageCo
     });
 }
 
-function patchContextMenuModule(ContextMenuModule: { default: FunctionComponent<MessageContextMenuProps> }) {
-    if (pluginHasStopped) return;
-    Patcher.after(ContextMenuModule, 'default', patchContextMenu);
-}
-
 export function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));
 
@@ -68,12 +63,16 @@ export function start() {
 
     injectCSS(css);
 
+    const patchContextMenuModule = (ContextMenuModule: { default: FunctionComponent<MessageContextMenuProps> }) =>
+        Patcher.after(ContextMenuModule, 'default', patchContextMenu);
+
     MessageContextMenuModulePromise.then(patchContextMenuModule);
     SystemMessageContextMenuModulePromise.then(patchContextMenuModule);
 }
 
 export function stop() {
-    pluginHasStopped = true;
+    MessageContextMenuModuleAbortController.abort();
+    SystemMessageContextMenuModuleAbortController.abort();
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.unsubscribe(rpcEvent, callback));
     Patcher.unpatchAll();
     clearCSS();

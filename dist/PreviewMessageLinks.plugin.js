@@ -1,6 +1,6 @@
 /**
  * @name PreviewMessageLinks
- * @version 1.0.0
+ * @version 1.0.1
  * @author dylan-dang
  * @description Shows a embedded message preview for message links in chat
  * @authorId 316707214075101200
@@ -53,9 +53,16 @@ const SwitchItem = getModule(byDisplayName('SwitchItem'));
 const HelpMessage = getModule(byProps('HelpMessageTypes')).default;
 const MessageHeader = getModule(byDisplayName('MessageHeader'));
 const { default: ConnectedMessageAccessories, MessageAccessories } = getModule(byProps('MessageAccessories'));
-const MessageContextMenuModulePromise = waitForModule((m) => m.default.displayName === 'MessageContextMenu');
+const MessageContextMenuModuleAbortController = new AbortController();
+const SystemMessageContextMenuModuleAbortController = new AbortController();
+const MessageContextMenuModulePromise = waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
+    signal: MessageContextMenuModuleAbortController.signal,
+});
 const SystemMessageContextMenuModulePromise = waitForModule(
-    (m) => m.default.displayName === 'SystemMessageContextMenu'
+    (m) => m.default.displayName === 'SystemMessageContextMenu',
+    {
+        signal: SystemMessageContextMenuModuleAbortController.signal,
+    }
 );
 const Constants = getModule(byProps('Endpoints'));
 const { Endpoints, EmbedTypes, USER_MESSAGE_TYPES } = Constants;
@@ -579,7 +586,6 @@ var subscriptions = /*#__PURE__*/ Object.freeze({
 });
 var css_248z =
     '.messageEmbed {\n  background: var(--background-secondary);\n  color: var(--text-normal);\n  display: inline-block;\n  pointer-events: auto;\n  position: relative;\n  border-radius: 4px;\n  max-width: 100%;\n  margin: 2px 0;\n}\n.messageEmbed > * {\n  --background-secondary: rgba(0, 0, 0, 0.1);\n  --background-secondary-alt: rgba(0, 0, 0, 0.1);\n  padding-right: 48px;\n  background: none;\n  border: none;\n}\n.messageEmbed .wrapper-15CKyy {\n  background: none;\n}\n\n.jumpButton {\n  pointer-events: auto;\n  background: rgba(0, 0, 0, 0.2);\n  position: absolute;\n  right: 4px;\n  top: 4px;\n}\n\n.compact-2Nkcau.hasThread-3h-KJV > .messageEmbed:before {\n  background-color: var(--background-accent);\n  position: absolute;\n  content: "";\n  top: -2px;\n  bottom: -2px;\n  left: -2.5rem;\n  width: 2px;\n}\n\n.disableInteraction {\n  pointer-events: none;\n}';
-let pluginHasStopped = false;
 const JumpingActionIds = new Set(['edit', 'reply', 'mark-unread']);
 
 function traverseMenuItems({ props }, callback) {
@@ -609,11 +615,6 @@ function patchContextMenu(_, [{ target, message, channel }], contextMenu) {
     });
 }
 
-function patchContextMenuModule(ContextMenuModule) {
-    if (pluginHasStopped) return;
-    Patcher.after(ContextMenuModule, 'default', patchContextMenu);
-}
-
 function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));
     Patcher.instead(MessageContent, 'type', (_, [props], MessageContent) =>
@@ -631,12 +632,16 @@ function start() {
         return cachedMessage.message;
     });
     injectCSS(css_248z);
+
+    const patchContextMenuModule = (ContextMenuModule) => Patcher.after(ContextMenuModule, 'default', patchContextMenu);
+
     MessageContextMenuModulePromise.then(patchContextMenuModule);
     SystemMessageContextMenuModulePromise.then(patchContextMenuModule);
 }
 
 function stop() {
-    pluginHasStopped = true;
+    MessageContextMenuModuleAbortController.abort();
+    SystemMessageContextMenuModuleAbortController.abort();
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.unsubscribe(rpcEvent, callback));
     Patcher.unpatchAll();
     clearCSS();
