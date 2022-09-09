@@ -1,3 +1,5 @@
+import { ModuleFilter } from 'bdapi';
+
 /**
  * Series of {@link Filters} to be used for finding webpack modules.
  * @type Filters

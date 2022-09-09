@@ -1,8 +1,29 @@
+export type ModuleFilter = (module: any) => boolean;
+
+import type { ReactNode } from 'react';
+/**
+ * A callback that modifies method logic.
+ * This callback is called on each call of the original method and is provided all data about original call.
+ * Any of the data can be modified if necessary, but do so wisely.
+ * @param {Object} data Data object with information about current call and original method that you may need in your patching callback.
+ * @param {any} thisObject
+ * @returns Makes sense only when used as `instead` parameter in `monkeyPatch`. If something other than `undefined` is returned, the returned value replaces the value of `data.returnValue`.
+ * If used as `before` or `after` parameters, return value is ignored.
+ */
+export type MonkeyPatchFunction = (data: {
+    thisObject: any;
+    methodArguments: any[];
+    CancelPatch: () => void;
+    originalMethod: (...args: any[]) => any;
+    callOriginalMethod: (...args: any[]) => any;
+    returnValue: any;
+}) => any;
+
 /**
  * {@link Patcher} is a utility class for modifying existing functions.
  * @type Patcher
  */
-export * as Patcher from './Patcher'
+export * as Patcher from './Patcher';
 
 /**
  * {@link Webpack} is a utility class for getting internal webpack modules.
@@ -267,9 +288,9 @@ export function monkeyPatch(
         once?: boolean;
         silent?: boolean;
         displayName?: string;
-        before?: PatchFunction;
-        after?: PatchFunction;
-        instead?: PatchFunction;
+        before?: MonkeyPatchFunction;
+        after?: MonkeyPatchFunction;
+        instead?: MonkeyPatchFunction;
     }
 );
 
@@ -460,7 +481,17 @@ interface OpenDialogOptions {
      * Contains which features the dialog should use. The following values are
      * supported:
      */
-    properties?: Array<'openFile' | 'openDirectory' | 'multiSelections' | 'showHiddenFiles' | 'createDirectory' | 'promptToCreate' | 'noResolveAliases' | 'treatPackageAsDirectory' | 'dontAddToRecent'>;
+    properties?: Array<
+        | 'openFile'
+        | 'openDirectory'
+        | 'multiSelections'
+        | 'showHiddenFiles'
+        | 'createDirectory'
+        | 'promptToCreate'
+        | 'noResolveAliases'
+        | 'treatPackageAsDirectory'
+        | 'dontAddToRecent'
+    >;
     /**
      * Message to display above input boxes.
      *
@@ -476,7 +507,6 @@ interface OpenDialogOptions {
 }
 
 interface FileFilter {
-
     // Docs: https://electronjs.org/docs/api/structures/file-filter
 
     extensions: string[];

@@ -1,3 +1,5 @@
+import type { ModuleFilter } from 'bdapi';
+
 /**
  * Generates a function that filters by a set of properties.
  * @param {...string} props List of property names

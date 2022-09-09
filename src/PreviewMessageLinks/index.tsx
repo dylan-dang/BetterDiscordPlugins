@@ -14,7 +14,8 @@ import * as MessageCache from './MessageCache';
 import * as subscriptions from './subscriptions';
 import css from './styles.scss';
 import { jumpToMessage, transitionToGuild } from 'discord/utils';
-import type { FunctionComponent } from 'react';
+import type { FunctionComponent, ReactNode } from 'react';
+import { MessageRecord } from 'discord/types';
 
 const JumpingActionIds = new Set(['edit', 'reply', 'mark-unread']);
 type MenuItemProps = { id: string; label: string; action(...args: any[]): any };
@@ -46,7 +47,7 @@ function patchContextMenu(_: unknown, [{ target, message, channel }]: [MessageCo
 export function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));
 
-    Patcher.instead(MessageContent, 'type', (_, [props]: [MessageContentProps], MessageContent) => (
+    Patcher.instead(MessageContent, 'type', (_, [props], MessageContent) => (
         <PatchedMessageContent MessageContent={MessageContent} {...props} />
     ));
 
@@ -65,7 +66,6 @@ export function start() {
 
     const patchContextMenuModule = (ContextMenuModule: { default: FunctionComponent<MessageContextMenuProps> }) =>
         Patcher.after(ContextMenuModule, 'default', patchContextMenu);
-
     MessageContextMenuModulePromise.then(patchContextMenuModule);
     SystemMessageContextMenuModulePromise.then(patchContextMenuModule);
 }

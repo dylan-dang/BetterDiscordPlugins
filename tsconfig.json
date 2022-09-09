@@ -1,8 +1,5 @@
 {
-    "include": [
-        "./src/**/*",
-        "./typings"
-    ],
+    "include": ["./src/**/*", "./typings"],
     "compilerOptions": {
         "strict": true,
         "experimentalDecorators": true,
@@ -18,16 +15,11 @@
         "baseUrl": ".",
         "moduleResolution": "node",
         "resolveJsonModule": true,
-        "typeRoots": [
-            "./typings"
-        ],
-        "types": [
-            "node",
-        ],
+        "noImplicitAny": true,
+        "typeRoots": ["./typings"],
+        "types": ["node"],
         "paths": {
-            "*": [
-                "./lib/*"
-            ],
+            "*": ["./lib/*"]
         }
     }
 }
