@@ -90,5 +90,5 @@ export async function signup(email: string, password: string, name: string): Pro
 }
 
 export async function uploadMedia() {
-    return await post(mediaEnpoint('upload'));
+    return await post(mediaEnpoint('upload'),);
 }

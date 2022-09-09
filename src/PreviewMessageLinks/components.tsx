@@ -18,7 +18,7 @@ import { DEFAULT_POPOUTS, EmbedTypes, linkRegex, LocaleMessages, USER_MESSAGE_TY
 import { formatErrorMessage, useMessageCache, useSetting } from './hooks';
 import type { MessageContentProps } from 'discord/components';
 import type { FunctionComponent, ReactNode, MouseEvent, MouseEventHandler } from 'react';
-import { useState, Children, useCallback, memo } from 'bdapi/React';
+import { useState, Children, useCallback, memo } from 'react';
 import { ChannelRecord, MessageRecord, snowflake } from 'discord/types';
 import { ChannelStore, ReferencedMessageStore } from 'discord/stores';
 import {
@@ -193,15 +193,15 @@ export function MessagePreview({ channel, message, compact, depth }: MessagePrev
 
     const interactiveProps: Partial<ChannelMessageProps> = interactive
         ? {
-              onContextMenu,
-              childrenRepliedMessage,
-              childrenHeader: USER_MESSAGE_TYPES.has(message.type) && (
-                  <MemoizedMessagePreviewHeader {...{ channel, message, compact, popouts, setPopout }} />
-              ),
-          }
+            onContextMenu,
+            childrenRepliedMessage,
+            childrenHeader: USER_MESSAGE_TYPES.has(message.type) && (
+                <MemoizedMessagePreviewHeader {...{ channel, message, compact, popouts, setPopout }} />
+            ),
+        }
         : {
-              className: 'disableInteraction',
-          };
+            className: 'disableInteraction',
+        };
 
     return (
         <div

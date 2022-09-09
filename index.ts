@@ -53,7 +53,7 @@ async function resolveEntryFile(pluginName: string) {
         try {
             await access(entryFile);
             return entryFile;
-        } catch {}
+        } catch { }
     }
     throw new Error(`Could not resolve entry module for ${pluginName}.`);
 }
