@@ -7,7 +7,7 @@
  * @param {any} extraValue `undefined` for `before` patches, `originalFunction` for `instead` patches. and `returnValue` for `after` patches.
  * @returns {any} Makes sense only when using an instead or after patch. If something other than undefined is returned, the returned value replaces the value of returnValue. If used for before the return value is ignored.
  */
-export type PatchCallback<Extra> = (thisObject: any, arguments: any, extraValue: Extra) => any;
+export type PatchCallback<Method, Extra> = (thisObject: any, arguments: Parameters<Method>, extraValue: Extra) => any;
 
 /**
  * This method patches onto another function, allowing your code to run beforehand.
@@ -20,7 +20,7 @@ export type PatchCallback<Extra> = (thisObject: any, arguments: any, extraValue:
 export function before<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
     moduleToPatch: T,
     functionName: N,
-    callback: PatchCallback<undefined>
+    callback: PatchCallback<T[N], undefined>
 ): () => void;
 
 /**
@@ -34,7 +34,7 @@ export function before<T, N extends { [K in keyof T]: T[K] extends CallableFunct
 export function instead<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
     moduleToPatch: T,
     functionName: N,
-    callback: PatchCallback<T[N]>
+    callback: PatchCallback<T[N], T[N]>
 ): () => void;
 
 /**
@@ -47,7 +47,7 @@ export function instead<T, N extends { [K in keyof T]: T[K] extends CallableFunc
 export function after<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
     moduleToPatch: T,
     functionName: N,
-    callback: PatchCallback<T[N] extends (...args: any) => infer R ? R : never>
+    callback: PatchCallback<T[N], T[N] extends (...args: any) => infer R ? R : never>
 ): () => void;
 
 /**

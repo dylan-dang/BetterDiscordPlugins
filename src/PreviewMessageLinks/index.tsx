@@ -16,6 +16,7 @@ import css from './styles.scss';
 import { jumpToMessage, transitionToGuild } from 'discord/utils';
 import type { FunctionComponent, ReactNode } from 'react';
 import { MessageRecord } from 'discord/types';
+import { PatchCallback } from 'bdapi/patcher';
 
 const JumpingActionIds = new Set(['edit', 'reply', 'mark-unread']);
 type MenuItemProps = { id: string; label: string; action(...args: any[]): any };
@@ -27,7 +28,11 @@ function traverseMenuItems({ props }: any, callback: (props: MenuItemProps) => v
     }
 }
 
-function patchContextMenu(_: unknown, [{ target, message, channel }]: [MessageContextMenuProps], contextMenu: any) {
+const patchContextMenu: PatchCallback<FunctionComponent<MessageContextMenuProps>, any> = (
+    _,
+    [{ target, message, channel }],
+    contextMenu
+) => {
     if (!target.closest('.messageEmbed')) return contextMenu;
     traverseMenuItems(contextMenu, (props) => {
         const { action, id } = props;
@@ -42,7 +47,7 @@ function patchContextMenu(_: unknown, [{ target, message, channel }]: [MessageCo
             return action(...args);
         };
     });
-}
+};
 
 export function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));
