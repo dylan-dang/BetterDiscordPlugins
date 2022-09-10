@@ -47,7 +47,7 @@ export function instead<T, N extends { [K in keyof T]: T[K] extends CallableFunc
 export function after<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
     moduleToPatch: T,
     functionName: N,
-    callback: PatchCallback<T[N], T[N] extends (...args: any) => infer R ? R : never>
+    callback: PatchCallback<T[N], ReturnType<T[N]>>
 ): () => void;
 
 /**
