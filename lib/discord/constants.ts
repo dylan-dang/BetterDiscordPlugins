@@ -1,5 +1,5 @@
-import { getModule } from 'bdapi/Webpack';
-import { byProps } from 'bdapi/Webpack/Filters';
+import { getModule } from 'bdapi/webpack';
+import { byProps } from 'bdapi/webpack/filters';
 import { Popouts } from './utils';
 
 export { HelpMessageTypes, HelpMessageFontSizes } from './components';

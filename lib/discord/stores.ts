@@ -1,7 +1,7 @@
 import type { DepGraph } from 'dependency-graph';
 import type { ChannelRecord, MessageRecord, snowflake } from './types';
-import { getModule } from 'bdapi/Webpack';
-import { byProps } from 'bdapi/Webpack/Filters';
+import { getModule } from 'bdapi/webpack';
+import { byProps } from 'bdapi/webpack/filters';
 
 export interface ActionHandlerObject {
     name: string;
@@ -93,6 +93,9 @@ export interface ChannelStore extends Store {
     loadAllGuildAndPrivateChannelsFromDisk(): { [key: snowflake]: ChannelRecord };
 }
 
+export const ChannelStore: ChannelStore = getModule(byProps('getChannel', 'getDMFromUserId'));
+export const Dispatcher = ChannelStore._dispatcher;
+
 export interface MessageCache {
     _isCacheBefore: boolean;
     _map: {
@@ -156,6 +159,8 @@ export interface MessageStore extends Store {
     whenReady(channelId: snowflake, callback: () => void): void;
 }
 
+export const MessageStore: MessageStore = getModule(byProps('getMessages'));
+
 export type LoginStatus =
     | 'ACCOUNT_DISABLED'
     | 'ACCOUNT_SCHEDULED_FOR_DELETION'
@@ -197,6 +202,8 @@ export interface UserStore extends Store {
     isAuthenticated(): boolean;
 }
 
+export const UserStore: UserStore = getModule(byProps('getSessionId'));
+
 export type MessageReferenceState = { state: number };
 
 export interface ReferencedMessageStore extends Store {
@@ -206,8 +213,4 @@ export interface ReferencedMessageStore extends Store {
     initialize(): void;
 }
 
-export const ChannelStore: ChannelStore = getModule(byProps('getChannel', 'getDMFromUserId'));
-export const MessageStore: MessageStore = getModule(byProps('getMessages'));
-export const UserStore: UserStore = getModule(byProps('getSessionId'));
 export const ReferencedMessageStore: ReferencedMessageStore = getModule(byProps('getMessageByReference'));
-export const Dispatcher = ChannelStore._dispatcher;
