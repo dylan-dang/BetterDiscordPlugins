@@ -53,114 +53,182 @@ async function resolveEntryFile(pluginName: string) {
         try {
             await access(entryFile);
             return entryFile;
-        } catch { }
+        } catch {}
     }
     throw new Error(`Could not resolve entry module for ${pluginName}.`);
 }
 
-interface TranformBdPluginOptions {
-    meta?: any;
-    pluginName: string;
+function createMeta(meta: any): Plugin {
+    return {
+        name: 'create-meta',
+        renderChunk(code) {
+            const fields = Object.entries(meta).map(([key, value]) => ` * @${key} ${value}`);
+            return ['/**', ...fields, ' */', code].join('\n');
+        },
+    };
 }
 
-function tranformBdPlugin({ meta, pluginName }: TranformBdPluginOptions): Plugin {
-    // Performs unsafe transformations to eliminate dead code and add meta
+function propertyChain(...chain: string[]) {
+    return chain.map((val): t.Expression => t.identifier(val)).reduce((prev, curr) => t.memberExpression(prev, curr));
+}
+
+const moduleReplacements: Record<string, t.Expression> = {
+    react: propertyChain('BdApi', 'React'),
+    'react-dom': propertyChain('BdApi', 'ReactDOM'),
+    bdapi: t.identifier('BdApi'),
+    'bdapi/patcher': propertyChain('BdApi', 'Patcher'),
+    'bdapi/webpack': propertyChain('BdApi', 'Webpack'),
+    'bdapi/webpack/filters': propertyChain('BdApi', 'Webpack', 'Filters'),
+};
+
+function getRootObject(path: NodePath<t.Node>) {
+    while (path.isMemberExpression()) path = path.get('object');
+    return path;
+}
+
+function originatesFromBdApi(path: NodePath<t.Node>): boolean {
+    while (true) {
+        const rootObject = getRootObject(path);
+        if (rootObject.isCallExpression()) {
+            // used when import bdapi from default
+            const callee = rootObject.get('callee');
+            if (!callee.isIdentifier()) return false;
+            // _interopDefaultLegacy can't be shadowed
+            if (callee.node.name !== '_interopDefaultLegacy') return false;
+            const [interopModule] = rootObject.get('arguments');
+            if (!interopModule.isExpression()) return false;
+            path = interopModule;
+            continue;
+        }
+        if (!rootObject.isIdentifier()) return false;
+        if (rootObject.node.name == 'BdApi' && !path.scope.hasBinding('BdApi')) return true;
+        const binding = path.scope.getBinding(rootObject.node.name);
+        if (!binding) return false;
+        // assume variable is not mutated
+        if (!binding.path.isVariableDeclarator()) return false; // could be a parameter
+        const init = binding.path.get('init');
+        if (!init.isExpression()) return false;
+        path = init;
+    }
+}
+
+function tranformBdPlugin(pluginName: string): Plugin {
+    const bdMethodsToBind = new Set([
+        'injectCSS',
+        'clearCSS',
+        'loadData',
+        'getData',
+        'saveData',
+        'setData',
+        'deleteData',
+        'before',
+        'instead',
+        'after',
+    ]);
+
+    const pureBdMethods = new Set([
+        'findModule',
+        'findAllModules',
+        'findModuleByProps',
+        'findModuleByPrototypes',
+        'findModuleByDisplayName',
+        'getInternalInstance',
+        'suppressErrors',
+        'testJSON',
+        'isSettingEnabled',
+        'getBDData',
+        'isEnabled',
+        'get',
+        'getAll',
+        'getData',
+        'getPatchesByCaller',
+        'combine',
+        'byDisplayName',
+        'byStrings',
+        'byRegex',
+        'byPrototypeFields',
+        'byProps',
+        'getModule',
+        'getBulk',
+        'waitForModule',
+    ]);
+
+    function removeIfUnreferenced(path: NodePath, identifierKey: string): void {
+        const identifier = path.get(identifierKey);
+        if (Array.isArray(identifier) || !identifier.isIdentifier()) return;
+        const binding = path.scope.getBinding(identifier.node.name);
+        if (!binding || binding.referenced) return;
+        path.remove();
+    }
+
     return {
         name: 'transform-better-discord-plugin',
-        renderChunk(oldCode) {
-            const ast = parse(oldCode);
-
+        renderChunk(code) {
+            const ast = parse(code);
             traverse(ast, {
-                ExpressionStatement(path) {
-                    path.traverse({
-                        CallExpression({ node: { callee } }) {
-                            if (callee.type !== 'Identifier') return;
-                            const binding = path.scope.getBinding(callee.name);
-                            if (!binding) return;
-                            if (!binding.path.isVariableDeclarator()) return;
-                            const init = binding.path.get('init');
-                            if (!init.isIdentifier()) return;
-                            if (init.node.name !== 'Webpack') return;
-                            binding.dereference();
-                            path.remove();
-                        },
-                    });
+                Statement(path) {
+                    // remove pure Bd methods when called alone as a statement
+                    // (assumes method was not renamed and that arguments are also pure (cuz i'm lazy))
+                    if (!path.isExpressionStatement()) return;
+                    const expression = getRootObject(path.get('expression'));
+                    if (!expression.isCallExpression()) return;
+                    const callee = expression.get('callee');
+                    const lastMember = callee.isMemberExpression() ? callee.get('property') : callee;
+                    if (!lastMember.isIdentifier()) return;
+                    if (!pureBdMethods.has(lastMember.node.name)) return;
+                    if (!originatesFromBdApi(callee)) return;
+                    path.remove();
                 },
-            });
-
-            traverse(ast, {
                 VariableDeclarator(path) {
-                    const unreferenced = new Set<string>();
-                    function removeIfUnreferenced(path: NodePath, identifierKey: string): void {
-                        const identifier = path.get(identifierKey);
-                        if (Array.isArray(identifier) || !identifier.isIdentifier()) return;
-                        const { name } = identifier.node;
-                        const binding = path.scope.getBinding(name);
-                        if (!binding || binding.referenced) return;
-                        unreferenced.add(name);
-                        path.remove();
-                    }
-
-                    function removePicksFromBindObject() {
-                        const init = path.get('init');
-                        if (!init.isCallExpression()) return;
-                        const callee = init.get('callee');
-                        if (!callee.isIdentifier()) return;
-                        if (callee.node.name !== 'BindObject') return;
-                        const [, bindingName, methodNames] = init.get('arguments');
-                        if (bindingName.isIdentifier() && bindingName.node.name === '__PLUGIN_NAME__') {
-                            bindingName.replaceWith(t.stringLiteral(pluginName));
-                        }
-
-                        if (!methodNames?.isArrayExpression()) return;
-                        for (const methodName of methodNames.get('elements')) {
-                            if (!methodName.isStringLiteral()) continue;
-                            if (unreferenced.has(methodName.node.value)) methodName.remove();
-                        }
-                    }
-
+                    // remove unreferenced destructures (assumes getter is pure)
                     path.get('id').traverse({
                         ObjectProperty: (path) => removeIfUnreferenced(path, 'value'),
                         RestElement: (path) => removeIfUnreferenced(path, 'argument'),
                     });
-                    removePicksFromBindObject();
+                },
+                CallExpression(path) {
+                    // replace bdapi and react modules with BdApi UMD
+                    const callee = path.get('callee');
+                    if (!callee.isIdentifier()) return;
+                    if (callee.node.name !== 'require') return;
+                    if (path.scope.hasBinding('require')) return;
+                    const [moduleName] = path.get('arguments');
+                    if (!moduleName.isStringLiteral()) return;
+                    if (!(moduleName.node.value in moduleReplacements)) return;
+                    path.replaceWith(moduleReplacements[moduleName.node.value]);
+                    path.skip();
+                },
+                MemberExpression(path) {
+                    // binds BdApi methods (guaranteed to be accessed by property unless explicitly destructured)
+                    const property = path.get('property');
+                    if (!property.isIdentifier()) return;
+                    if (!bdMethodsToBind.has(property.node.name)) return;
+                    const object = path.get('object');
+                    if (!originatesFromBdApi(object)) return;
+                    path.replaceWith(
+                        t.callExpression(t.memberExpression(path.node, t.identifier('bind')), [
+                            t.nullLiteral(), // should use `object.node`, but BdApi doesn't use `this` so it's fine
+                            t.stringLiteral(pluginName),
+                        ])
+                    );
+                    path.skip();
                 },
                 Program(path) {
-                    const body = path.get('body');
-                    const usesDefaultExport = body.some((statement) => {
-                        if (!statement.isExpressionStatement()) return;
-                        const expression = statement.get('expression');
-                        if (!expression.isAssignmentExpression({ operator: '=' })) return;
-                        const [left] = ([] as NodePath[]).concat(statement.get('left'));
-                        if (!left.isMemberExpression()) return;
-                        const object = left.get('object');
-                        if (!object.isIdentifier()) return;
-                        if (object.node.name !== 'module') return;
-                        const property = left.get('property');
-                        if (!property.isIdentifier()) return;
-                        if (property.node.name !== 'exports') return;
-                        return true;
-                    });
-                    if (!usesDefaultExport)
-                        body.at(-1)?.insertAfter(
-                            t.expressionStatement(
-                                t.assignmentExpression(
-                                    '=',
-                                    t.memberExpression(t.identifier('module'), t.identifier('exports')),
-                                    t.arrowFunctionExpression([], t.identifier('exports'))
-                                )
+                    // add module.exports = () => exports to top of file
+                    path.unshiftContainer(
+                        'body',
+                        t.expressionStatement(
+                            t.assignmentExpression(
+                                '=',
+                                t.memberExpression(t.identifier('module'), t.identifier('exports')),
+                                t.arrowFunctionExpression([], t.identifier('exports'))
                             )
-                        );
+                        )
+                    );
                 },
             });
 
-            const { code } = generate(ast);
-            if (!meta) return code;
-
-            const fields = Object.entries(meta).map(([key, value]) => ` * @${key} ${value}`);
-            if (!fields.length) return code;
-
-            return ['/**', ...fields, ' */', code].join('\n');
+            return generate(ast).code;
         },
     };
 }
@@ -173,14 +241,15 @@ async function build(pluginName: string) {
     console.log(`Building plugin ${pluginName}...`);
     const bundle = await rollup({
         input: await resolveEntryFile(pluginName),
-        external: ['uuid'],
+        external: Object.keys(moduleReplacements),
         plugins: [
             nodeResolve({ preferBuiltins: true }),
             postcss({ inject: false }),
-            ts(),
             commonjs(),
+            ts(),
             json(),
-            tranformBdPlugin({ meta, pluginName }),
+            createMeta(meta),
+            tranformBdPlugin(pluginName),
             prettier({ tabWidth: 4, singleQuote: true, printWidth: 120, parser: 'babel' }),
         ],
     });
