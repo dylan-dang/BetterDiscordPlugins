@@ -1,3 +1,5 @@
+type MethodName<T> = { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T];
+
 /**
  * A callback that modifies method logic.
  * This callback is called on each call of the original method and is provided all data about original call.
@@ -17,7 +19,7 @@ export type PatchCallback<Method, Extra> = (thisObject: any, arguments: Paramete
  * @param {function} callback Function to run before the original method. The function is given the `this` context and the `arguments` of the original function.
  * @returns {function} Function that cancels the original patch.
  */
-export function before<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
+export function before<T, N extends MethodName<T>>(
     moduleToPatch: T,
     functionName: N,
     callback: PatchCallback<T[N], undefined>
@@ -31,7 +33,7 @@ export function before<T, N extends { [K in keyof T]: T[K] extends CallableFunct
  * @param {function} callback Function to run before the original method. The function is given the `this` context, `arguments` of the original function, and also the original function.
  * @returns {function} Function that cancels the original patch.
  */
-export function instead<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
+export function instead<T, N extends MethodName<T>>(
     moduleToPatch: T,
     functionName: N,
     callback: PatchCallback<T[N], T[N]>
@@ -44,7 +46,7 @@ export function instead<T, N extends { [K in keyof T]: T[K] extends CallableFunc
  * @param {function} callback Function to run after the original method. The function is given the `this` context, the `arguments` of the original function, and the `return` value of the original function.
  * @returns {function} Function that cancels the original patch.
  */
-export function after<T, N extends { [K in keyof T]: T[K] extends CallableFunction ? K : never }[keyof T]>(
+export function after<T, N extends MethodName<T>>(
     moduleToPatch: T,
     functionName: N,
     callback: PatchCallback<T[N], ReturnType<T[N]>>
