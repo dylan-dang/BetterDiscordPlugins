@@ -51,12 +51,16 @@ export function start() {
         <PatchedMessageContent MessageContent={MessageContent} {...props} />
     ));
 
-    Patcher.after(MessageAccessories.prototype, 'render', ({ props }, _, otherAccessories) => (
-        <PatchedMessageAccessories {...props}>{otherAccessories}</PatchedMessageAccessories>
-    ));
+    Patcher.after(
+        MessageAccessories.prototype,
+        'render',
+        ({ props }: typeof MessageAccessories.prototype, _, otherAccessories) => (
+            <PatchedMessageAccessories {...props}>{otherAccessories}</PatchedMessageAccessories>
+        )
+    );
 
     Patcher.after(MessageStore, 'getMessage', (_, [channelId, messageId], returnValue) => {
-        if (returnValue) returnValue;
+        if (returnValue) return returnValue;
         const cachedMessage = MessageCache.get(channelId, messageId);
         if (cachedMessage?.status !== 'SUCCESS') return;
         return cachedMessage.message;
