@@ -124,6 +124,7 @@ function tranformBdPlugin(pluginName: string): Plugin {
         'before',
         'instead',
         'after',
+        'unpatchAll',
     ]);
 
     const pureBdMethods = new Set([

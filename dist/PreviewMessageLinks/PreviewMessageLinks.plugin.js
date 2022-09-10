@@ -39,11 +39,6 @@ const FormSection = webpack.getModule(filters.byDisplayName('FormSection'));
 const FormTitle = webpack.getModule(filters.byDisplayName('FormTitle'));
 const FormText = webpack.getModule(filters.byDisplayName('FormText'));
 const SwitchItem = webpack.getModule(filters.byDisplayName('SwitchItem'));
-const HelpMessage = webpack.getModule(filters.byProps('HelpMessageTypes')).default;
-const MessageHeader = webpack.getModule(filters.byDisplayName('MessageHeader'));
-const { default: ConnectedMessageAccessories, MessageAccessories } = webpack.getModule(
-    filters.byProps('MessageAccessories')
-);
 const MessageContextMenuModuleAbortController = new AbortController();
 const SystemMessageContextMenuModuleAbortController = new AbortController();
 const MessageContextMenuModulePromise = webpack.waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
@@ -55,6 +50,11 @@ const SystemMessageContextMenuModulePromise = webpack.waitForModule(
         signal: SystemMessageContextMenuModuleAbortController.signal,
     }
 );
+const HelpMessage = webpack.getModule(filters.byProps('HelpMessageTypes')).default;
+const { default: ConnectedMessageAccessories, MessageAccessories } = webpack.getModule(
+    filters.byProps('MessageAccessories')
+);
+const MessageHeader = webpack.getModule(filters.byDisplayName('MessageHeader'));
 const Constants = webpack.getModule(filters.byProps('Endpoints'));
 const { Endpoints, EmbedTypes, USER_MESSAGE_TYPES } = Constants;
 const { DEFAULT_POPOUTS } = webpack.getModule(filters.byProps('DEFAULT_POPOUTS'));
@@ -93,10 +93,10 @@ function removeListener(channelId, messageId, listener) {
 }
 
 const ChannelStore = webpack.getModule(filters.byProps('getChannel', 'getDMFromUserId'));
+const Dispatcher = ChannelStore._dispatcher;
 const MessageStore = webpack.getModule(filters.byProps('getMessages'));
 const UserStore = webpack.getModule(filters.byProps('getSessionId'));
 const ReferencedMessageStore = webpack.getModule(filters.byProps('getMessageByReference'));
-const Dispatcher = ChannelStore._dispatcher;
 const MessageParser = webpack.getModule(filters.byProps('renderMessageMarkupToAST'));
 const { renderMessageMarkupToAST } = MessageParser;
 const { transitionToGuild } = webpack.getModule(filters.byProps('transitionTo', 'replaceWith', 'getHistory'));
@@ -631,6 +631,7 @@ function start() {
         MessageStore,
         'getMessage',
         (_, [channelId, messageId], returnValue) => {
+            if (returnValue) return returnValue;
             const cachedMessage = get(channelId, messageId);
             if (cachedMessage?.status !== 'SUCCESS') return;
             return cachedMessage.message;
@@ -649,7 +650,7 @@ function stop() {
     MessageContextMenuModuleAbortController.abort();
     SystemMessageContextMenuModuleAbortController.abort();
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.unsubscribe(rpcEvent, callback));
-    bdapi.Patcher.unpatchAll();
+    bdapi.Patcher.unpatchAll.bind(null, 'PreviewMessageLinks')();
     bdapi.clearCSS.bind(null, 'PreviewMessageLinks')();
 }
 
