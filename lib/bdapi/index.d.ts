@@ -1,6 +1,6 @@
+import type { ReactNode } from 'react';
 export type ModuleFilter = (module: any) => boolean;
 
-import type { ReactNode } from 'react';
 /**
  * A callback that modifies method logic.
  * This callback is called on each call of the original method and is provided all data about original call.
@@ -10,7 +10,7 @@ import type { ReactNode } from 'react';
  * @returns Makes sense only when used as `instead` parameter in `monkeyPatch`. If something other than `undefined` is returned, the returned value replaces the value of `data.returnValue`.
  * If used as `before` or `after` parameters, return value is ignored.
  */
-export type MonkeyPatchFunction = (data: {
+export type MonkeyPatchCallback = (data: {
     thisObject: any;
     methodArguments: any[];
     CancelPatch: () => void;
@@ -23,13 +23,13 @@ export type MonkeyPatchFunction = (data: {
  * {@link Patcher} is a utility class for modifying existing functions.
  * @type Patcher
  */
-export * as Patcher from './Patcher';
+export * as Patcher from './patcher';
 
 /**
  * {@link Webpack} is a utility class for getting internal webpack modules.
  * @type Webpack
  */
-export * as Webpack from './Webpack';
+export * as Webpack from './webpack';
 
 /**
  * The React module being used inside Discord.
@@ -288,9 +288,9 @@ export function monkeyPatch(
         once?: boolean;
         silent?: boolean;
         displayName?: string;
-        before?: MonkeyPatchFunction;
-        after?: MonkeyPatchFunction;
-        instead?: MonkeyPatchFunction;
+        before?: MonkeyPatchCallback;
+        after?: MonkeyPatchCallback;
+        instead?: MonkeyPatchCallback;
     }
 );
 
