@@ -4,7 +4,7 @@ import { ModuleFilter } from 'bdapi';
  * Series of {@link Filters} to be used for finding webpack modules.
  * @type Filters
  */
-export * as Filters from './Filters';
+export * as Filters from './filters';
 
 /**
  * Finds a module using a filter function.
