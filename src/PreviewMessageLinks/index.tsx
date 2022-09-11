@@ -7,15 +7,14 @@ import {
     SystemMessageContextMenuModuleAbortController,
     SystemMessageContextMenuModulePromise,
 } from 'discord/components';
-import type { MessageContextMenuProps, MessageContentProps } from 'discord/components';
+import type { MessageContextMenuProps } from 'discord/components';
 import { SettingsPanel, PatchedMessageContent, PatchedMessageAccessories } from './components';
 import { Dispatcher, MessageStore } from 'discord/stores';
 import * as MessageCache from './MessageCache';
 import * as subscriptions from './subscriptions';
 import css from './styles.scss';
 import { jumpToMessage, transitionToGuild } from 'discord/utils';
-import type { FunctionComponent, ReactNode } from 'react';
-import { MessageRecord } from 'discord/types';
+import type { FunctionComponent } from 'react';
 import { PatchCallback } from 'bdapi/patcher';
 
 const JumpingActionIds = new Set(['edit', 'reply', 'mark-unread']);
