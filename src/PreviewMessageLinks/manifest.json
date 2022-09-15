@@ -1,6 +1,6 @@
 {
     "name": "PreviewMessageLinks",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "dylan-dang",
     "description": "Adds a embedded message preview for message links in chat",
     "authorId": 316707214075101196
