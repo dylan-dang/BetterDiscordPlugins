@@ -7,7 +7,7 @@ import {
     SystemMessageContextMenuModuleAbortController,
     SystemMessageContextMenuModulePromise,
 } from 'discord/components';
-import type { MessageContextMenuProps, MessageContentProps } from 'discord/components';
+import type { MessageContextMenuProps } from 'discord/components';
 import { SettingsPanel, PatchedMessageContent, PatchedMessageAccessories } from './components';
 import { Dispatcher, MessageStore } from 'discord/stores';
 import * as MessageCache from './MessageCache';
@@ -15,6 +15,7 @@ import * as subscriptions from './subscriptions';
 import css from './styles.scss';
 import { jumpToMessage, transitionToGuild } from 'discord/utils';
 import type { FunctionComponent } from 'react';
+import { PatchCallback } from 'bdapi/patcher';
 
 const JumpingActionIds = new Set(['edit', 'reply', 'mark-unread']);
 type MenuItemProps = { id: string; label: string; action(...args: any[]): any };
@@ -26,7 +27,11 @@ function traverseMenuItems({ props }: any, callback: (props: MenuItemProps) => v
     }
 }
 
-function patchContextMenu(_: unknown, [{ target, message, channel }]: [MessageContextMenuProps], contextMenu: any) {
+const patchContextMenu: PatchCallback<FunctionComponent<MessageContextMenuProps>, any> = (
+    _,
+    [{ target, message, channel }],
+    contextMenu
+) => {
     if (!target.closest('.messageEmbed')) return contextMenu;
     traverseMenuItems(contextMenu, (props) => {
         const { action, id } = props;
@@ -41,21 +46,25 @@ function patchContextMenu(_: unknown, [{ target, message, channel }]: [MessageCo
             return action(...args);
         };
     });
-}
+};
 
 export function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));
 
-    Patcher.instead(MessageContent, 'type', (_, [props]: [MessageContentProps], MessageContent) => (
+    Patcher.instead(MessageContent, 'type', (_, [props], MessageContent) => (
         <PatchedMessageContent MessageContent={MessageContent} {...props} />
     ));
 
-    Patcher.after(MessageAccessories.prototype, 'render', ({ props }, _, otherAccessories) => (
-        <PatchedMessageAccessories {...props}>{otherAccessories}</PatchedMessageAccessories>
-    ));
+    Patcher.after(
+        MessageAccessories.prototype,
+        'render',
+        ({ props }: typeof MessageAccessories.prototype, _, otherAccessories) => (
+            <PatchedMessageAccessories {...props}>{otherAccessories}</PatchedMessageAccessories>
+        )
+    );
 
     Patcher.after(MessageStore, 'getMessage', (_, [channelId, messageId], returnValue) => {
-        if (returnValue) returnValue;
+        if (returnValue) return returnValue;
         const cachedMessage = MessageCache.get(channelId, messageId);
         if (cachedMessage?.status !== 'SUCCESS') return;
         return cachedMessage.message;
@@ -65,7 +74,6 @@ export function start() {
 
     const patchContextMenuModule = (ContextMenuModule: { default: FunctionComponent<MessageContextMenuProps> }) =>
         Patcher.after(ContextMenuModule, 'default', patchContextMenu);
-
     MessageContextMenuModulePromise.then(patchContextMenuModule);
     SystemMessageContextMenuModulePromise.then(patchContextMenuModule);
 }

@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 import * as MessageCache from './MessageCache';
 import { saveData, loadData } from 'bdapi';
-import { useState, useEffect } from 'bdapi/React';
+import { useState, useEffect } from 'react';
 import { snowflake } from 'discord/types';
 import { ChannelStore, MessageStore } from 'discord/stores';
 import { Endpoints, HelpMessageTypes, LocaleMessages } from 'discord/constants';

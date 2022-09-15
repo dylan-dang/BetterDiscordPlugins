@@ -1,5 +1,5 @@
-import { getModule } from 'bdapi/Webpack';
-import { byDisplayName, byProps } from 'bdapi/Webpack/Filters';
+import { getModule } from 'bdapi/webpack';
+import { byDisplayName, byProps } from 'bdapi/webpack/filters';
 import type { MouseEventHandler, ReactNode } from 'react';
 import { MessageComponentProps } from './components';
 import { MessageReferenceState, Store } from './stores';

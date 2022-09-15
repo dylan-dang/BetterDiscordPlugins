@@ -1,5 +1,6 @@
 import type {
     AriaAttributes,
+    Component,
     ComponentClass,
     CSSProperties,
     FunctionComponent,
@@ -9,8 +10,8 @@ import type {
     RefObject,
 } from 'react';
 import type { AttachmentObject, ChannelRecord, MessageRecord, snowflake } from './types';
-import { getModule, waitForModule } from 'bdapi/Webpack';
-import { byDisplayName, byProps } from 'bdapi/Webpack/Filters';
+import { getModule, waitForModule } from 'bdapi/webpack';
+import { byDisplayName, byProps } from 'bdapi/webpack/filters';
 import { Author, Popouts, PopoutRenderer } from './utils';
 import { MessageReferenceState } from './stores';
 
@@ -23,6 +24,10 @@ export interface MessagePlaceholderProps {
         height: number;
     };
 }
+
+export const MessagePlaceholder: FunctionComponent<MessagePlaceholderProps> = getModule(
+    byProps('HEIGHT_COZY_MESSAGE_START')
+).default;
 
 export interface MessageComponentProps {
     id?: snowflake;
@@ -37,6 +42,10 @@ export interface MessageComponentProps {
     [key: string]: any;
 }
 
+export const MessageComponent: MemoExoticComponent<FunctionComponent<MessageComponentProps>> = getModule(
+    byProps('getElementFromMessageId')
+).default;
+
 export interface MessageContentProps {
     message: MessageRecord;
     className?: string;
@@ -45,6 +54,10 @@ export interface MessageContentProps {
     onUpdate?(): void;
     contentRef?: RefObject<HTMLDivElement>;
 }
+
+export const MessageContent: MemoExoticComponent<FunctionComponent<MessageContentProps>> = getModule(
+    (m) => m.default?.type?.displayName === 'MessageContent'
+).default;
 
 export interface ChannelMessageProps {
     message: MessageRecord;
@@ -65,6 +78,10 @@ export interface ChannelMessageProps {
     [key: string]: any;
 }
 
+export const ChannelMessage: MemoExoticComponent<FunctionComponent<ChannelMessageProps>> = getModule(
+    (m) => m.default?.type?.displayName === 'ChannelMessage'
+).default;
+
 export interface AnchorProps {
     href?: string;
     onClick?(): void;
@@ -78,6 +95,8 @@ export interface AnchorProps {
     focusProps?: any;
     [key: string]: any;
 }
+
+export const Anchor: FunctionComponent<AnchorProps> = getModule(byDisplayName('Anchor'));
 
 export const enum MarkerPositions {
     ABOVE,
@@ -115,6 +134,8 @@ export interface SliderProps
     markers?: number[];
 }
 
+export const Slider: ComponentClass<SliderProps> = getModule(byDisplayName('Slider'));
+
 export type HeaderTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5';
 
 export interface FormSectionProps {
@@ -128,6 +149,8 @@ export interface FormSectionProps {
     titleId?: string;
 }
 
+export const FormSection: FunctionComponent<FormSectionProps> = getModule(byDisplayName('FormSection'));
+
 export interface FormTitleProps {
     tag?: HeaderTag;
     children?: ReactNode;
@@ -137,6 +160,8 @@ export interface FormTitleProps {
     required?: boolean;
     error?: ReactNode;
 }
+
+export const FormTitle: FunctionComponent<FormTitleProps> = getModule(byDisplayName('FormTitle'));
 
 export interface FormTextProps {
     type?:
@@ -156,6 +181,8 @@ export interface FormTextProps {
     [key: string]: any;
 }
 
+export const FormText: FunctionComponent<FormTextProps> = getModule(byDisplayName('FormText'));
+
 export interface SwitchItemProps {
     className?: string;
     style?: CSSProperties;
@@ -169,6 +196,8 @@ export interface SwitchItemProps {
     onChange?(): void;
 }
 
+export const SwitchItem: FunctionComponent<SwitchItemProps> = getModule(byDisplayName('SwitchItem'));
+
 export interface MessageContextMenuProps {
     channel: ChannelRecord;
     message: MessageRecord;
@@ -178,6 +207,18 @@ export interface MessageContextMenuProps {
     onHeightUpdate?(): void;
     children: ReactNode[];
 }
+
+export const MessageContextMenuModuleAbortController = new AbortController();
+export const SystemMessageContextMenuModuleAbortController = new AbortController();
+
+export const MessageContextMenuModulePromise: Promise<{ default: FunctionComponent<MessageContextMenuProps> }> =
+    waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
+        signal: MessageContextMenuModuleAbortController.signal,
+    });
+export const SystemMessageContextMenuModulePromise: Promise<{ default: FunctionComponent<MessageContextMenuProps> }> =
+    waitForModule((m) => m.default.displayName === 'SystemMessageContextMenu', {
+        signal: SystemMessageContextMenuModuleAbortController.signal,
+    });
 
 export const enum HelpMessageTypes {
     WARNING,
@@ -198,6 +239,8 @@ export interface HelpMessageProps {
     textClassName?: string;
     fontSize?: HelpMessageFontSizes;
 }
+
+export const HelpMessage: FunctionComponent<HelpMessageProps> = getModule(byProps('HelpMessageTypes')).default;
 
 export interface MessageAccessoriesProps {
     channel?: ChannelRecord;
@@ -221,59 +264,43 @@ export interface MessageAccessoriesProps {
     [key: string]: any;
 }
 
-export interface MessageAccessoriesComponent extends ComponentClass<MessageAccessoriesProps> {
-    prototype: {
-        constructor(): MessageAccessoriesComponent;
-        render(): ReactNode;
-        renderActivityInvite(message: MessageRecord): ReactNode;
-        renderAttachments(message: MessageRecord): ReactNode;
-        renderCodedLinks(message: MessageRecord): ReactNode;
-        renderComponentAccessories(message: MessageRecord): ReactNode;
-        renderEmbeds(message: MessageRecord): ReactNode;
-        renderEphemeralAccessories(message: MessageRecord): ReactNode;
-        renderGiftCodes(message: MessageRecord): ReactNode;
-        renderPublishBump(message: MessageRecord): ReactNode;
-        renderReactions(message: MessageRecord): ReactNode;
-        renderRemoveAttachmentConfirmModal(message: MessageRecord): ReactNode;
-        renderStickersAccessories(message: MessageRecord): ReactNode;
-        renderSuppressConfirmModal(message: MessageRecord): ReactNode;
-        renderThreadAccessories(message: MessageRecord): ReactNode;
-        renderThreadRoleMentionWarning(message: MessageRecord): ReactNode;
-        shouldComponentUpdate(nextProps: MessageAccessoriesProps, nextState: any): boolean;
-        shouldRenderInvite(code: string): boolean;
-        _createAttachmentOnClickOverrides(attacments: AttachmentObject[]): ((event: MouseEvent) => void)[];
-        _messageAttachmentToEmbedMedia(attachment: AttachmentObject): {
-            height: number;
-            width: number;
-            proxyURL: string;
-            url: string;
-        };
+declare class MessageAccessoriesClass extends Component<MessageAccessoriesProps> {
+    renderActivityInvite(message: MessageRecord): ReactNode;
+    renderAttachments(message: MessageRecord): ReactNode;
+    renderCodedLinks(message: MessageRecord): ReactNode;
+    renderComponentAccessories(message: MessageRecord): ReactNode;
+    renderEmbeds(message: MessageRecord): ReactNode;
+    renderEphemeralAccessories(message: MessageRecord): ReactNode;
+    renderGiftCodes(message: MessageRecord): ReactNode;
+    renderPublishBump(message: MessageRecord): ReactNode;
+    renderReactions(message: MessageRecord): ReactNode;
+    renderRemoveAttachmentConfirmModal(message: MessageRecord): ReactNode;
+    renderStickersAccessories(message: MessageRecord): ReactNode;
+    renderSuppressConfirmModal(message: MessageRecord): ReactNode;
+    renderThreadAccessories(message: MessageRecord): ReactNode;
+    renderThreadRoleMentionWarning(message: MessageRecord): ReactNode;
+    shouldComponentUpdate(nextProps: MessageAccessoriesProps, nextState: any): boolean;
+    shouldRenderInvite(code: string): boolean;
+    _createAttachmentOnClickOverrides(attacments: AttachmentObject[]): ((event: MouseEvent) => void)[];
+    _messageAttachmentToEmbedMedia(attachment: AttachmentObject): {
+        height: number;
+        width: number;
+        proxyURL: string;
+        url: string;
     };
 }
+
+export const {
+    default: ConnectedMessageAccessories,
+    MessageAccessories,
+}: {
+    default: FunctionComponent<MessageAccessoriesProps>;
+    MessageAccessories: typeof MessageAccessoriesClass;
+} = getModule(byProps('MessageAccessories'));
 
 export type ClickablePropsWithTag<T extends keyof JSX.IntrinsicElements> = { tag: T } & JSX.IntrinsicElements[T];
 export type ClickableProps = JSX.IntrinsicElements['div'] | ClickablePropsWithTag<keyof JSX.IntrinsicElements>;
 export const Clickable: ComponentClass<ClickableProps> = getModule(byDisplayName('Clickable'));
-
-export const MessagePlaceholder: FunctionComponent<MessagePlaceholderProps> = getModule(
-    byProps('HEIGHT_COZY_MESSAGE_START')
-).default;
-export const MessageComponent: MemoExoticComponent<FunctionComponent<MessageComponentProps>> = getModule(
-    byProps('getElementFromMessageId')
-).default;
-export const MessageContent: MemoExoticComponent<FunctionComponent<MessageContentProps>> = getModule(
-    (m) => m.default?.type?.displayName === 'MessageContent'
-).default;
-export const ChannelMessage: MemoExoticComponent<FunctionComponent<ChannelMessageProps>> = getModule(
-    (m) => m.default?.type?.displayName === 'ChannelMessage'
-).default;
-export const Anchor: FunctionComponent<AnchorProps> = getModule(byDisplayName('Anchor'));
-export const Slider: ComponentClass<SliderProps> = getModule(byDisplayName('Slider'));
-export const FormSection: FunctionComponent<FormSectionProps> = getModule(byDisplayName('FormSection'));
-export const FormTitle = getModule(byDisplayName('FormTitle'));
-export const FormText: FunctionComponent<FormTextProps> = getModule(byDisplayName('FormText'));
-export const SwitchItem: FunctionComponent<SwitchItemProps> = getModule(byDisplayName('SwitchItem'));
-export const HelpMessage: FunctionComponent<HelpMessageProps> = getModule(byProps('HelpMessageTypes')).default;
 
 interface MessageHeaderProps {
     author: Author;
@@ -309,23 +336,3 @@ interface ChildrenHeaderProps {
 export const ChildrenHeader: FunctionComponent<ChildrenHeaderProps> = getModule((m) =>
     m.default.toString().includes('messagePopouts')
 );
-
-export const {
-    default: ConnectedMessageAccessories,
-    MessageAccessories,
-}: {
-    default: FunctionComponent<MessageAccessoriesProps>;
-    MessageAccessories: MessageAccessoriesComponent;
-} = getModule(byProps('MessageAccessories'));
-
-export const MessageContextMenuModuleAbortController = new AbortController();
-export const SystemMessageContextMenuModuleAbortController = new AbortController();
-
-export const MessageContextMenuModulePromise: Promise<{ default: FunctionComponent<MessageContextMenuProps> }> =
-    waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
-        signal: MessageContextMenuModuleAbortController.signal,
-    });
-export const SystemMessageContextMenuModulePromise: Promise<{ default: FunctionComponent<MessageContextMenuProps> }> =
-    waitForModule((m) => m.default.displayName === 'SystemMessageContextMenu', {
-        signal: SystemMessageContextMenuModuleAbortController.signal,
-    });

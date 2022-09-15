@@ -7,11 +7,18 @@
  */
 'use strict';
 
+module.exports = () => exports;
+
 Object.defineProperty(exports, '__esModule', {
     value: true,
 });
+var bdapi = BdApi;
+var webpack = BdApi.Webpack;
+var filters = BdApi.Webpack.Filters;
 
 var EventEmitter = require('events');
+
+var react = BdApi.React;
 
 function _interopDefaultLegacy(e) {
     return e && typeof e === 'object' && 'default' in e
@@ -23,51 +30,37 @@ function _interopDefaultLegacy(e) {
 
 var EventEmitter__default = /*#__PURE__*/ _interopDefaultLegacy(EventEmitter);
 
-function BindObject(object, firstArgument, pick) {
-    const pickSet = pick && new Set(pick);
-    const entries = pickSet ? Object.entries(object).filter(([key]) => pickSet.has(key)) : Object.entries(object);
-    return Object.fromEntries(
-        entries.map(([key, value]) => [key, typeof value === 'function' ? value.bind(null, firstArgument) : value])
-    );
-}
-
-const { clearCSS, injectCSS, loadData, saveData } = BindObject(BdApi, 'PreviewMessageLinks', [
-    'injectCSS',
-    'clearCSS',
-    'loadData',
-    'saveData',
-]);
-const Patcher = BindObject(BdApi.Patcher, 'PreviewMessageLinks');
-const { Webpack, React } = BdApi;
-const { getModule, waitForModule, Filters } = Webpack;
-const { byProps, byDisplayName } = Filters;
-const MessagePlaceholder = getModule(byProps('HEIGHT_COZY_MESSAGE_START')).default;
-const MessageContent = getModule((m) => m.default?.type?.displayName === 'MessageContent').default;
-const ChannelMessage = getModule((m) => m.default?.type?.displayName === 'ChannelMessage').default;
-const Anchor = getModule(byDisplayName('Anchor'));
-const Slider = getModule(byDisplayName('Slider'));
-const FormSection = getModule(byDisplayName('FormSection'));
-const FormTitle = getModule(byDisplayName('FormTitle'));
-const FormText = getModule(byDisplayName('FormText'));
-const SwitchItem = getModule(byDisplayName('SwitchItem'));
-const HelpMessage = getModule(byProps('HelpMessageTypes')).default;
-const MessageHeader = getModule(byDisplayName('MessageHeader'));
-const { default: ConnectedMessageAccessories, MessageAccessories } = getModule(byProps('MessageAccessories'));
+const MessagePlaceholder = webpack.getModule(filters.byProps('HEIGHT_COZY_MESSAGE_START')).default;
+const MessageContent = webpack.getModule((m) => m.default?.type?.displayName === 'MessageContent').default;
+const ChannelMessage = webpack.getModule((m) => m.default?.type?.displayName === 'ChannelMessage').default;
+const Anchor = webpack.getModule(filters.byDisplayName('Anchor'));
+const Slider = webpack.getModule(filters.byDisplayName('Slider'));
+const FormSection = webpack.getModule(filters.byDisplayName('FormSection'));
+const FormTitle = webpack.getModule(filters.byDisplayName('FormTitle'));
+const FormText = webpack.getModule(filters.byDisplayName('FormText'));
+const SwitchItem = webpack.getModule(filters.byDisplayName('SwitchItem'));
 const MessageContextMenuModuleAbortController = new AbortController();
 const SystemMessageContextMenuModuleAbortController = new AbortController();
-const MessageContextMenuModulePromise = waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
+const MessageContextMenuModulePromise = webpack.waitForModule((m) => m.default.displayName === 'MessageContextMenu', {
     signal: MessageContextMenuModuleAbortController.signal,
 });
-const SystemMessageContextMenuModulePromise = waitForModule(
+const SystemMessageContextMenuModulePromise = webpack.waitForModule(
     (m) => m.default.displayName === 'SystemMessageContextMenu',
     {
         signal: SystemMessageContextMenuModuleAbortController.signal,
     }
 );
-const Constants = getModule(byProps('Endpoints'));
-const { Endpoints, EmbedTypes, USER_MESSAGE_TYPES } = Constants;
-const { DEFAULT_POPOUTS } = getModule(byProps('DEFAULT_POPOUTS'));
-const { Messages: LocaleMessages } = getModule((m) => m.default?.Messages?.REPLY_QUOTE_MESSAGE_NOT_LOADED).default;
+const HelpMessage = webpack.getModule(filters.byProps('HelpMessageTypes')).default;
+const { default: ConnectedMessageAccessories, MessageAccessories } = webpack.getModule(
+    filters.byProps('MessageAccessories')
+);
+const MessageHeader = webpack.getModule(filters.byDisplayName('MessageHeader'));
+const Constants = webpack.getModule(filters.byProps('Endpoints'));
+const { Endpoints, USER_MESSAGE_TYPES } = Constants;
+const { DEFAULT_POPOUTS } = webpack.getModule(filters.byProps('DEFAULT_POPOUTS'));
+const { Messages: LocaleMessages } = webpack.getModule(
+    (m) => m.default?.Messages?.REPLY_QUOTE_MESSAGE_NOT_LOADED
+).default;
 const linkRegex =
     /^^https?:\/\/(?:[\w-\.]+\.)?discord(?:app)?\.com(?:\:\d+)?\/channels\/(\d+|@me)\/(\d+)\/(\d+)(?:\/.*)?$/i;
 const cache = new Map();
@@ -99,26 +92,25 @@ function removeListener(channelId, messageId, listener) {
     emitter.removeListener(hash(channelId, messageId), listener);
 }
 
-const { Children, memo, useCallback, useEffect, useState } = React;
-const ChannelStore = getModule(byProps('getChannel', 'getDMFromUserId'));
-const MessageStore = getModule(byProps('getMessages'));
-const UserStore = getModule(byProps('getSessionId'));
-const ReferencedMessageStore = getModule(byProps('getMessageByReference'));
+const ChannelStore = webpack.getModule(filters.byProps('getChannel', 'getDMFromUserId'));
 const Dispatcher = ChannelStore._dispatcher;
-const MessageParser = getModule(byProps('renderMessageMarkupToAST'));
+const MessageStore = webpack.getModule(filters.byProps('getMessages'));
+const UserStore = webpack.getModule(filters.byProps('getSessionId'));
+const ReferencedMessageStore = webpack.getModule(filters.byProps('getMessageByReference'));
+const MessageParser = webpack.getModule(filters.byProps('renderMessageMarkupToAST'));
 const { renderMessageMarkupToAST } = MessageParser;
-const { transitionToGuild } = getModule(byProps('transitionTo', 'replaceWith', 'getHistory'));
-const { jumpToMessage } = getModule(byProps('jumpToMessage'));
-const { useStateFromStores } = getModule(byProps('useStateFromStores'));
-const { useRoleIcon } = getModule(byProps('useRoleIcon'));
-const { default: useAuthor } = getModule(byProps('getMessageAuthor'));
-const usePopout = getModule(byProps('isSelected')).default;
-const RequestModule = getModule(byProps('getAPIBaseURL'));
-const { createMessageRecord, updateMessageRecord } = getModule(byProps('createMessageRecord'));
+const { transitionToGuild } = webpack.getModule(filters.byProps('transitionTo', 'replaceWith', 'getHistory'));
+const { jumpToMessage } = webpack.getModule(filters.byProps('jumpToMessage'));
+const { useStateFromStores } = webpack.getModule(filters.byProps('useStateFromStores'));
+const { useRoleIcon } = webpack.getModule(filters.byProps('useRoleIcon'));
+const { default: useAuthor } = webpack.getModule(filters.byProps('getMessageAuthor'));
+const usePopout = webpack.getModule(filters.byProps('isSelected')).default;
+const RequestModule = webpack.getModule(filters.byProps('getAPIBaseURL'));
+const { createMessageRecord, updateMessageRecord } = webpack.getModule(filters.byProps('createMessageRecord'));
 const { useClickMessageAuthorAvatar, useClickMessageAuthorUsername, useContextMenuMessage, useContextMenuUser } =
-    getModule(byProps('useContextMenuUser'));
-const renderUserGuildPopout = getModule(byDisplayName('renderUserGuildPopout'));
-const useRepliedMessage = getModule((m) => m.default?.toString?.().includes('referencedAvatarProfile')).default;
+    webpack.getModule(filters.byProps('useContextMenuUser'));
+const renderUserGuildPopout = webpack.getModule(filters.byDisplayName('renderUserGuildPopout'));
+const useRepliedMessage = webpack.getModule((m) => m.default?.toString?.().includes('referencedAvatarProfile')).default;
 const settingsEmitter = new EventEmitter__default['default']();
 const defaultSettings = {
     hideLinks: true,
@@ -127,14 +119,16 @@ const defaultSettings = {
 };
 
 function useSetting(key) {
-    const [setting, setSetting] = useState(loadData(key) ?? defaultSettings[key]);
-    useEffect(() => {
+    const [setting, setSetting] = react.useState(
+        bdapi.loadData.bind(null, 'PreviewMessageLinks')(key) ?? defaultSettings[key]
+    );
+    react.useEffect(() => {
         settingsEmitter.addListener(key, setSetting);
         return () => void settingsEmitter.removeListener(key, setSetting);
     }, []);
 
     function saveSetting(value) {
-        saveData(key, value);
+        bdapi.saveData.bind(null, 'PreviewMessageLinks')(key, value);
         settingsEmitter.emit(key, value);
     }
 
@@ -192,11 +186,11 @@ async function fetchMessage(channelId, messageId) {
 }
 
 function useMessageCache(channelId, messageId) {
-    useEffect(() => {
+    react.useEffect(() => {
         addListener(channelId, messageId, setCache);
         return () => removeListener(channelId, messageId, setCache);
     }, []);
-    const [cache, setCache] = useState(() => {
+    const [cache, setCache] = react.useState(() => {
         const cache = get(channelId, messageId);
         if (cache) return cache;
         const message = MessageStore?.getMessage(channelId, messageId);
@@ -212,8 +206,8 @@ function useMessageCache(channelId, messageId) {
 
 function PatchedMessageContent({ MessageContent, ...props }) {
     const [hideLinks] = useSetting('hideLinks');
-    if (!hideLinks || Children.count(props.content) === 0) return MessageContent(props);
-    const content = Children.toArray(props.content).filter((part) => !part?.props?.href?.match(linkRegex));
+    if (!hideLinks || react.Children.count(props.content) === 0) return MessageContent(props);
+    const content = react.Children.toArray(props.content).filter((part) => !part?.props?.href?.match(linkRegex));
     const { 0: firstPart, [content.length - 1]: lastPart } = content;
     if (typeof firstPart === 'string') content.splice(0, 1, firstPart.trimStart());
     if (typeof lastPart === 'string') content.splice(-1, 1, lastPart.trimEnd());
@@ -222,7 +216,7 @@ function PatchedMessageContent({ MessageContent, ...props }) {
 
 function PatchedMessageAccessories({ children, message, depth, compact }) {
     const messageLinks = renderMessageMarkupToAST(message)
-        .content.filter(({ type }) => type === EmbedTypes.LINK)
+        .content.filter(({ type }) => type === 'link')
         .map(({ target }) => target.match(linkRegex))
         .filter(Boolean);
     return BdApi.React.createElement(
@@ -275,7 +269,7 @@ function MessagePreviewHeader({ channel, message, compact, popouts, setPopout })
     const onContextMenu = useContextMenuUser(message.author.id, channel.id);
     const onClickUsername = useClickMessageAuthorUsername(message, channel, popouts.usernameProfile, setPopout);
     const onClickAvatar = useClickMessageAuthorAvatar(popouts.avatarProfile, setPopout);
-    const onPopoutRequestClose = useCallback(
+    const onPopoutRequestClose = react.useCallback(
         () =>
             setPopout({
                 usernameProfile: false,
@@ -305,10 +299,10 @@ function MessagePreviewHeader({ channel, message, compact, popouts, setPopout })
     });
 }
 
-const MemoizedMessagePreviewHeader = memo(MessagePreviewHeader);
+const MemoizedMessagePreviewHeader = react.memo(MessagePreviewHeader);
 
 function MessagePreview({ channel, message, compact, depth }) {
-    const [hovered, setHovered] = useState(false);
+    const [hovered, setHovered] = react.useState(false);
     const [interactive] = useSetting('interactive');
     const { popouts, setPopout } = usePopout(message.id, DEFAULT_POPOUTS);
     const messageReferenceState = useStateFromStores([ReferencedMessageStore], () =>
@@ -601,7 +595,7 @@ function traverseMenuItems({ props }, callback) {
     }
 }
 
-function patchContextMenu(_, [{ target, message, channel }], contextMenu) {
+const patchContextMenu = (_, [{ target, message, channel }], contextMenu) => {
     if (!target.closest('.messageEmbed')) return contextMenu;
     traverseMenuItems(contextMenu, (props) => {
         const { action, id } = props;
@@ -617,27 +611,36 @@ function patchContextMenu(_, [{ target, message, channel }], contextMenu) {
             return action(...args);
         };
     });
-}
+};
 
 function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));
-    Patcher.instead(MessageContent, 'type', (_, [props], MessageContent) =>
+    bdapi.Patcher.instead.bind(null, 'PreviewMessageLinks')(MessageContent, 'type', (_, [props], MessageContent) =>
         BdApi.React.createElement(PatchedMessageContent, {
             MessageContent: MessageContent,
             ...props,
         })
     );
-    Patcher.after(MessageAccessories.prototype, 'render', ({ props }, _, otherAccessories) =>
-        BdApi.React.createElement(PatchedMessageAccessories, { ...props }, otherAccessories)
+    bdapi.Patcher.after.bind(null, 'PreviewMessageLinks')(
+        MessageAccessories.prototype,
+        'render',
+        ({ props }, _, otherAccessories) =>
+            BdApi.React.createElement(PatchedMessageAccessories, { ...props }, otherAccessories)
     );
-    Patcher.after(MessageStore, 'getMessage', (_, [channelId, messageId], returnValue) => {
-        const cachedMessage = get(channelId, messageId);
-        if (cachedMessage?.status !== 'SUCCESS') return;
-        return cachedMessage.message;
-    });
-    injectCSS(css_248z);
+    bdapi.Patcher.after.bind(null, 'PreviewMessageLinks')(
+        MessageStore,
+        'getMessage',
+        (_, [channelId, messageId], returnValue) => {
+            if (returnValue) return returnValue;
+            const cachedMessage = get(channelId, messageId);
+            if (cachedMessage?.status !== 'SUCCESS') return;
+            return cachedMessage.message;
+        }
+    );
+    bdapi.injectCSS.bind(null, 'PreviewMessageLinks')(css_248z);
 
-    const patchContextMenuModule = (ContextMenuModule) => Patcher.after(ContextMenuModule, 'default', patchContextMenu);
+    const patchContextMenuModule = (ContextMenuModule) =>
+        bdapi.Patcher.after.bind(null, 'PreviewMessageLinks')(ContextMenuModule, 'default', patchContextMenu);
 
     MessageContextMenuModulePromise.then(patchContextMenuModule);
     SystemMessageContextMenuModulePromise.then(patchContextMenuModule);
@@ -647,8 +650,8 @@ function stop() {
     MessageContextMenuModuleAbortController.abort();
     SystemMessageContextMenuModuleAbortController.abort();
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.unsubscribe(rpcEvent, callback));
-    Patcher.unpatchAll();
-    clearCSS();
+    bdapi.Patcher.unpatchAll.bind(null, 'PreviewMessageLinks')();
+    bdapi.clearCSS.bind(null, 'PreviewMessageLinks')();
 }
 
 function getSettingsPanel() {
@@ -658,5 +661,3 @@ function getSettingsPanel() {
 exports.getSettingsPanel = getSettingsPanel;
 exports.start = start;
 exports.stop = stop;
-
-module.exports = () => exports;
