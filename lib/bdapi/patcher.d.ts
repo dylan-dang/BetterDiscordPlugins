@@ -9,7 +9,7 @@ type MethodName<T> = { [K in keyof T]: T[K] extends CallableFunction ? K : never
  * @param {any} extraValue `undefined` for `before` patches, `originalFunction` for `instead` patches. and `returnValue` for `after` patches.
  * @returns {any} Makes sense only when using an instead or after patch. If something other than undefined is returned, the returned value replaces the value of returnValue. If used for before the return value is ignored.
  */
-export type PatchCallback<Method, Extra> = (
+export type PatchCallback<Method extends (...args: any) => any, Extra> = (
     thisObject: any,
     arguments: Parameters<Method>,
     extraValue: Extra

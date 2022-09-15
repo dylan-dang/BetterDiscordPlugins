@@ -1,4 +1,4 @@
-import type { ModuleFilter } from 'bdapi';
+import type { ModuleFilter } from '..';
 
 /**
  * Generates a function that filters by a set of properties.

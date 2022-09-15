@@ -14,7 +14,7 @@ import {
     ChannelMessageProps,
     MessageHeader,
 } from 'discord/components';
-import { DEFAULT_POPOUTS, EmbedTypes, linkRegex, LocaleMessages, USER_MESSAGE_TYPES } from 'discord/constants';
+import { DEFAULT_POPOUTS, linkRegex, LocaleMessages, USER_MESSAGE_TYPES } from 'discord/constants';
 import { formatErrorMessage, useMessageCache, useSetting } from './hooks';
 import type { MessageContentProps } from 'discord/components';
 import type { FunctionComponent, ReactNode, MouseEvent, MouseEventHandler } from 'react';
@@ -60,7 +60,7 @@ export function PatchedMessageAccessories({
     compact,
 }: MessageAccessoriesProps & { depth?: number }) {
     const messageLinks = (renderMessageMarkupToAST(message).content as any[])
-        .filter(({ type }) => type === EmbedTypes.LINK)
+        .filter(({ type }) => type === 'link')
         .map(({ target }) => target.match(linkRegex))
         .filter(Boolean);
 

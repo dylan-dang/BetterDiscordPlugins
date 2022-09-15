@@ -56,7 +56,7 @@ const { default: ConnectedMessageAccessories, MessageAccessories } = webpack.get
 );
 const MessageHeader = webpack.getModule(filters.byDisplayName('MessageHeader'));
 const Constants = webpack.getModule(filters.byProps('Endpoints'));
-const { Endpoints, EmbedTypes, USER_MESSAGE_TYPES } = Constants;
+const { Endpoints, USER_MESSAGE_TYPES } = Constants;
 const { DEFAULT_POPOUTS } = webpack.getModule(filters.byProps('DEFAULT_POPOUTS'));
 const { Messages: LocaleMessages } = webpack.getModule(
     (m) => m.default?.Messages?.REPLY_QUOTE_MESSAGE_NOT_LOADED
@@ -216,7 +216,7 @@ function PatchedMessageContent({ MessageContent, ...props }) {
 
 function PatchedMessageAccessories({ children, message, depth, compact }) {
     const messageLinks = renderMessageMarkupToAST(message)
-        .content.filter(({ type }) => type === EmbedTypes.LINK)
+        .content.filter(({ type }) => type === 'link')
         .map(({ target }) => target.match(linkRegex))
         .filter(Boolean);
     return BdApi.React.createElement(
@@ -595,7 +595,7 @@ function traverseMenuItems({ props }, callback) {
     }
 }
 
-function patchContextMenu(_, [{ target, message, channel }], contextMenu) {
+const patchContextMenu = (_, [{ target, message, channel }], contextMenu) => {
     if (!target.closest('.messageEmbed')) return contextMenu;
     traverseMenuItems(contextMenu, (props) => {
         const { action, id } = props;
@@ -611,7 +611,7 @@ function patchContextMenu(_, [{ target, message, channel }], contextMenu) {
             return action(...args);
         };
     });
-}
+};
 
 function start() {
     Object.entries(subscriptions).forEach(([rpcEvent, callback]) => Dispatcher.subscribe(rpcEvent, callback));

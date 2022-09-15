@@ -39,7 +39,8 @@ function getOuputDir(pluginName?: string) {
         case 'darwin':
             return path.join('/Library', 'Preferences', 'BetterDiscord');
         default:
-            return path.join('.config', 'BetterDiscord', 'plugins');
+            if (!process.env.HOME) throw new Error('Could not find home folder');
+            return path.join(process.env.HOME, '.config', 'BetterDiscord', 'plugins');
     }
 }
 
