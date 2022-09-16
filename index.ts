@@ -35,12 +35,14 @@ function getOuputDir(pluginName?: string) {
     switch (platform) {
         case 'win32':
             if (!env.APPDATA) throw new Error('Could not find appdata folder');
-            return path.join(env.APPDATA, 'BetterDiscord', 'plugins');
+            return path.resolve(env.APPDATA, 'BetterDiscord', 'plugins');
         case 'darwin':
-            return path.join('/Library', 'Preferences', 'BetterDiscord');
+            if (!env.HOME) throw new Error('Could not find home folder');
+            return path.resolve(env.HOME, 'Library', 'Preferences', 'BetterDiscord');
         default:
-            if (!process.env.HOME) throw new Error('Could not find home folder');
-            return path.join(process.env.HOME, '.config', 'BetterDiscord', 'plugins');
+        case 'linux':
+            if (!env.HOME) throw new Error('Could not find home folder');
+            return path.resolve(env.HOME, '.config', 'BetterDiscord', 'plugins');
     }
 }
 
